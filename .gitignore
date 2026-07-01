@@ -1,0 +1,15 @@
+# Material de apoio/rascunho — não faz parte do site publicado
+# (fotos brutas, logo original, documentos de referência etc.)
+/Referência/
+/Adicionar/
+
+# Documentação interna de desenvolvimento — não faz parte do site publicado
+CLAUDE.md
+
+# Sobra do tema WordPress original — não é usado pelo site estático
+# (o CSS real do site é assets/css/style.css)
+/style.css
+
+# Sistema
+.DS_Store
+Thumbs.db
