@@ -985,7 +985,8 @@ section { padding: 5rem 0; position: relative; }
   .servicos-header { align-items: flex-start; }
   .btn-leiamais { width: 100%; margin-top: 1.5rem; }
   .contato-inner { grid-template-columns: 1fr; gap: 2rem; }
-  .footer-inner { flex-direction: column; text-align: center; }
+  .footer-inner { flex-direction: column; align-items: center; text-align: center; gap: 0.4rem; }
+  .footer-sep { display: none; }
 
   .carousel { padding: 0 2.25rem; }
   .carousel-slide { flex-basis: 90%; }
