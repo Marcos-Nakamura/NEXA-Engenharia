@@ -329,17 +329,9 @@ body:not(.page-home) .main-nav a.nav-cta:hover {
   background: #000000;
 }
 
-.hero-bg {
-  position: absolute;
-  inset: 0;
-  background-image: url('../home/hero-bg.jpg');
-  background-size: cover;
-  background-position: center;
-}
-
-/* Vídeo de fundo do hero: fica por cima da imagem estática (que serve
-   de poster/fallback caso o vídeo não carregue) e é cortado como cover,
-   sem distorcer, igual a uma imagem de fundo comum. */
+/* Vídeo de fundo do hero: cortado como cover, sem distorcer, igual a uma
+   imagem de fundo comum. Enquanto o vídeo não carrega, aparece o fundo
+   preto da .hero-section como fallback. */
 .hero-video {
   position: absolute;
   inset: 0;
