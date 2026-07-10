@@ -39,6 +39,8 @@
   --shadow-lg: 0 20px 50px rgba(0,0,0,0.22);
   --shadow-accent: 0 10px 30px rgba(253,203,10,0.35);
   --transition: 0.25s ease;
+
+  --header-h: 104px;
 }
 
 html {
@@ -53,6 +55,14 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+/* O header agora é fixed (fora do fluxo). Na home o hero ocupa o topo
+   por baixo dele (efeito transparente); nas demais páginas, como o
+   header já nasce sólido, precisamos empurrar o conteúdo pra baixo na
+   altura do header pra nada ficar escondido atrás dele. */
+body:not(.page-home) #main-content {
+  padding-top: var(--header-h);
 }
 
 /* --- Typography --- */
@@ -133,15 +143,33 @@ section { padding: 5rem 0; position: relative; }
 }
 .btn-outline:hover svg { transform: translateX(4px); }
 
-/* --- Header / Navigation --- */
+/* --- Header / Navigation ---
+   Fica fixo (flutuando sobre o conteúdo) e começa transparente no topo
+   da home — deixando o vídeo/imagem do hero aparecer atrás dele. Ao
+   rolar a página (classe .scrolled, alternada via main.js) ou em
+   qualquer página que não seja a home (sem hero escuro por trás), o
+   header assume fundo branco com leve blur e sombra para continuar
+   legível. */
 #site-header {
-  position: sticky;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 52;
-  background: var(--nexa-header-bg);
-  padding: 1.5rem 0;
+  z-index: 999;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  background: transparent;
+  box-shadow: none;
+  transition: background-color 0.35s ease, box-shadow 0.35s ease, backdrop-filter 0.35s ease;
+}
+
+#site-header.scrolled,
+body:not(.page-home) #site-header {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(180%) blur(10px);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
 }
 
 .header-inner {
@@ -154,12 +182,20 @@ section { padding: 5rem 0; position: relative; }
 .site-logo {
   display: inline-flex;
   align-items: center;
-  margin-left: 0.5rem;
 }
 
 .site-logo img {
-  height: 92px;
+  height: 98px;
   width: auto;
+  display: block;
+  border-radius: 12px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0);
+  transition: background-color 0.35s ease;
+}
+
+#site-header:not(.scrolled) .site-logo img {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .site-logo .logo-text {
@@ -176,29 +212,89 @@ section { padding: 5rem 0; position: relative; }
 
 .main-nav ul {
   display: flex;
+  align-items: center;
+  gap: 2.5rem;
   list-style: none;
-  border: 2px solid var(--nexa-accent);
 }
 
 .main-nav a {
   position: relative;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 200px;
+  width: auto;
   font-family: var(--font-body);
-  font-size: 1.25rem;
-  font-weight: 400;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--nexa-white);
-  background: var(--nexa-nav-inactive);
-  padding: 1.25rem 2.5rem;
-  transition: background-color 0.4s, color 0.4s;
+  background: transparent;
+  padding: 0.4rem 0.05rem;
+  transition: color 0.35s ease;
+}
+
+.main-nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 2px;
+  background: var(--nexa-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.main-nav a:hover::after,
+.main-nav a.active::after {
+  transform: scaleX(1);
 }
 
 .main-nav a:hover,
 .main-nav a.active {
-  background: var(--nexa-light);
+  color: var(--nexa-accent);
+}
+
+/* Header sólido (rolado ou fora da home): texto do menu em tom escuro
+   para manter contraste sobre o fundo branco. */
+#site-header.scrolled .main-nav a,
+body:not(.page-home) .main-nav a {
   color: var(--nexa-primary);
+}
+#site-header.scrolled .main-nav a:hover,
+#site-header.scrolled .main-nav a.active,
+body:not(.page-home) .main-nav a:hover,
+body:not(.page-home) .main-nav a.active {
+  color: var(--nexa-accent-dark);
+}
+
+/* Botão de contato (WhatsApp) — mesmo box do menu, aparência de pílula */
+.main-nav a.nav-cta {
+  padding: 0.6rem 1.4rem;
+  color: var(--nexa-primary);
+  background: #ffd400;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  transition: background-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
+}
+
+/* Sem o sublinhado animado dos demais itens */
+.main-nav a.nav-cta::after { display: none; }
+
+.main-nav a.nav-cta:hover,
+.main-nav a.nav-cta.active,
+#site-header.scrolled .main-nav a.nav-cta,
+#site-header.scrolled .main-nav a.nav-cta:hover,
+body:not(.page-home) .main-nav a.nav-cta,
+body:not(.page-home) .main-nav a.nav-cta:hover {
+  color: var(--nexa-primary);
+}
+
+.main-nav a.nav-cta:hover {
+  background: #ffdd33;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 
 /* Mobile menu toggle */
@@ -210,20 +306,22 @@ section { padding: 5rem 0; position: relative; }
   padding: 12px;
   background: var(--nexa-accent);
   border: none;
-  border-radius: var(--radius);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.16);
 }
 .menu-toggle span {
   display: block;
-  width: 24px;
+  width: 22px;
   height: 2px;
-  background: var(--nexa-white);
+  background: var(--nexa-primary);
   transition: all var(--transition);
 }
 
 /* --- Hero Section --- */
 .hero-section {
   position: relative;
-  height: 639px;
+  height: 100vh;
+  min-height: 640px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -234,16 +332,30 @@ section { padding: 5rem 0; position: relative; }
 .hero-bg {
   position: absolute;
   inset: 0;
-  background-image: url('../img/hero-bg.jpg');
+  background-image: url('../home/hero-bg.jpg');
   background-size: cover;
   background-position: center;
+}
+
+/* Vídeo de fundo do hero: fica por cima da imagem estática (que serve
+   de poster/fallback caso o vídeo não carregue) e é cortado como cover,
+   sem distorcer, igual a uma imagem de fundo comum. */
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .hero-overlay {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.65) 100%);
+  /* Um pouco mais escuro que antes: além de dar contraste pro texto,
+     ajuda a disfarçar qualquer imperfeição/ruído do vídeo de fundo. */
+  background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.75) 100%);
 }
 
 .hero-content {
@@ -413,7 +525,7 @@ section { padding: 5rem 0; position: relative; }
 .sobre-bg {
   position: absolute;
   inset: -10% 0;
-  background-image: url('../img/quem-somos-bg.jpg');
+  background-image: url('../home/quem-somos-bg.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -524,6 +636,20 @@ section { padding: 5rem 0; position: relative; }
 }
 .servico-card:hover .servico-nome { color: var(--nexa-accent-dark); }
 
+/* Resumo curto dentro do card (usado no resumo de Diferenciais na home) */
+.servico-desc {
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  font-weight: 400;
+  color: var(--nexa-gray);
+  line-height: 1.7;
+  margin-top: -0.4rem;
+}
+
+/* O resumo de Diferenciais reaproveita o layout de Serviços, mas mantém
+   o título em amarelo/dourado como era na seção original. */
+.diferenciais-summary .section-title { color: var(--nexa-accent); }
+
 /* --- Galeria (seção) --- */
 .galeria-section {
   background: var(--nexa-light);
@@ -554,14 +680,27 @@ section { padding: 5rem 0; position: relative; }
   will-change: transform;
 }
 
+/* Durante o "salto" invisível do loop infinito, desliga toda animação
+   (deslize da trilha + zoom/opacidade dos slides) para a costura não
+   piscar nem dar pop no slide do centro. */
+.carousel-track.no-anim,
+.carousel-track.no-anim .carousel-slide {
+  transition: none !important;
+}
+
 .carousel-slide {
   position: relative;
-  flex: 0 0 74%;
-  aspect-ratio: 16 / 9;
+  flex: 0 0 33.3333%;
+  height: 380px;
   background: #0a1420;
   border-radius: 0;
   overflow: hidden;
   box-shadow: none;
+  transform: scale(0.78);
+  opacity: 0.55;
+  z-index: 1;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .carousel-slide img {
@@ -569,6 +708,30 @@ section { padding: 5rem 0; position: relative; }
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+/* Só a foto em destaque no centro aparece em escala cheia e inteira
+   (sem cortes); as demais ficam reduzidas e só parcialmente visíveis.
+   A largura fica livre (flex-basis auto) para a foto conseguir manter
+   a altura de destaque sem sobrar tarja preta em cima/embaixo — se
+   precisar ficar um pouco mais larga que a coluna, sem problema. */
+.carousel-slide--active {
+  flex: 0 0 auto;
+  width: auto;
+  height: 420px;
+  align-self: center;
+  transform: scale(1);
+  opacity: 1;
+  z-index: 3;
+  background: transparent;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+}
+
+.carousel-slide--active img {
+  width: auto;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
 }
 
 /* Botões prev/next */
@@ -855,8 +1018,8 @@ section { padding: 5rem 0; position: relative; }
   right: 1.5rem;
   bottom: 1.5rem;
   z-index: 900;
-  width: 66px;
-  height: 68px;
+  width: 82px;
+  height: 84px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 100%);
   color: #25D366;
@@ -865,7 +1028,7 @@ section { padding: 5rem 0; position: relative; }
   justify-content: center;
   transition: background 0.2s, visibility 0.2s;
 }
-.whatsapp-float svg { width: 40px; height: 40px; transition: transform 0.2s; }
+.whatsapp-float svg { width: 54px; height: 54px; transition: transform 0.2s; }
 .whatsapp-float:hover {
   background: radial-gradient(circle, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.05) 15%, rgba(0,0,0,0.04) 30%, rgba(0,0,0,0.03) 45%, rgba(0,0,0,0.02) 60%, rgba(0,0,0,0.01) 80%, rgba(0,0,0,0) 100%);
   color: #25D366;
@@ -920,14 +1083,25 @@ section { padding: 5rem 0; position: relative; }
   .servicos-grid { grid-template-columns: 1fr 1fr; }
   .servicos-header { flex-wrap: wrap; }
   .carousel { padding: 0 3rem; }
-  .carousel-slide { flex-basis: 82%; }
+  .carousel-slide { flex-basis: 50%; height: 320px; }
+  .carousel-slide--active { height: 360px; }
 }
 
 @media (max-width: 768px) {
+  :root { --header-h: 80px; }
   section { padding: 3.5rem 0; }
 
   .main-nav { display: none; }
   .menu-toggle { display: flex; }
+
+  /* No dropdown mobile o botão mantém o visual de pílula amarela */
+  .main-nav.open a.nav-cta {
+    justify-content: center;
+    margin-top: 0.4rem;
+    color: var(--nexa-primary);
+    background: #ffd400;
+  }
+  .main-nav.open a.nav-cta:hover { background: #ffdd33; }
 
   .main-nav.open {
     display: flex;
@@ -970,7 +1144,7 @@ section { padding: 5rem 0; position: relative; }
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .hero-section { height: 492px; }
+  .hero-section { height: 100vh; min-height: 520px; }
   .hero-title { font-size: 36px; line-height: 50.4px; }
   .hero-title span { white-space: normal; }
   .hero-btn { width: 132px; height: 50px; font-size: 1rem; }
@@ -989,14 +1163,16 @@ section { padding: 5rem 0; position: relative; }
   .footer-sep { display: none; }
 
   .carousel { padding: 0 2.25rem; }
-  .carousel-slide { flex-basis: 90%; }
+  .carousel-slide { flex-basis: 50%; height: 220px; }
+  .carousel-slide--active { height: 260px; }
   .carousel-btn { width: 40px; height: 40px; }
   .carousel-btn--prev { left: 0.25rem; }
   .carousel-btn--next { right: 0.25rem; }
 
-  .whatsapp-float { right: 1rem; bottom: 1rem; width: 52px; height: 52px; }
+  .whatsapp-float { right: 1rem; bottom: 1rem; width: 64px; height: 64px; }
+  .whatsapp-float svg { width: 40px; height: 40px; }
 
-  .site-logo img { height: 64px; }
+  .site-logo img { height: 74px; }
 }
 
 @media (max-width: 480px) {

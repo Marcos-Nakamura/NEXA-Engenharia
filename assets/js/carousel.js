@@ -23,7 +23,9 @@
 
   const FOLDER = 'assets/carrossel/';
   const IMAGE_RE = /\.(jpe?g|png|gif|webp|avif)$/i;
-  const AUTOPLAY_MS = 5500;
+  const AUTOPLAY_MS = 8500;
+  // Foto que abre o carrossel em destaque ao carregar a página.
+  const INITIAL_IMAGE = 'projeto-03.jpg';
 
   document.addEventListener('DOMContentLoaded', init);
 
@@ -44,7 +46,8 @@
     }
 
     buildSlides(track, dotsBox, images);
-    startCarousel({ root, track, dotsBox, prevBtn, nextBtn, total: images.length });
+    const initialIndex = Math.max(0, images.indexOf(INITIAL_IMAGE));
+    startCarousel({ root, track, dotsBox, prevBtn, nextBtn, total: images.length, initialIndex });
   }
 
   /* ── Descoberta das imagens ─────────────────────────────── */
@@ -103,21 +106,40 @@
   }
 
   /* ── Construção do DOM ──────────────────────────────────── */
+  // Quantos slides duplicados (clones) colocamos em cada ponta da trilha
+  // para o loop "infinito". Como sempre há um vizinho parcial visível de
+  // cada lado do slide em destaque, precisamos de mais de 1 clone: assim,
+  // ao dar a volta, o clone em destaque ainda tem vizinho para exibir e
+  // não sobra um buraco vazio na lateral. 2 cobre o layout atual.
+  const CLONES = 2;
+
+  function makeSlide(name, i, isClone) {
+    const slide = document.createElement('div');
+    slide.className = 'carousel-slide';
+    if (isClone) slide.dataset.clone = 'true';
+
+    const img = document.createElement('img');
+    img.src = FOLDER + encodeURIComponent(name);
+    img.alt = 'Projeto Nexa Engenharia ' + (i + 1);
+    img.loading = (!isClone && name === INITIAL_IMAGE) ? 'eager' : 'lazy';
+    slide.appendChild(img);
+    return slide;
+  }
+
   function buildSlides(track, dotsBox, images) {
     track.innerHTML = '';
     dotsBox.innerHTML = '';
 
+    const total = images.length;
+    const k = total > 1 ? Math.min(CLONES, total) : 0;
+
+    // Clones do fim, na frente (últimas k fotos, em ordem).
+    for (let j = total - k; j < total; j++) {
+      track.appendChild(makeSlide(images[j], j, true));
+    }
+
     images.forEach((name, i) => {
-      const slide = document.createElement('div');
-      slide.className = 'carousel-slide';
-
-      const img = document.createElement('img');
-      img.src = FOLDER + encodeURIComponent(name);
-      img.alt = 'Projeto Nexa Engenharia ' + (i + 1);
-      img.loading = i === 0 ? 'eager' : 'lazy';
-      slide.appendChild(img);
-
-      track.appendChild(slide);
+      track.appendChild(makeSlide(name, i, false));
 
       const dot = document.createElement('button');
       dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
@@ -127,45 +149,85 @@
       dot.dataset.index = String(i);
       dotsBox.appendChild(dot);
     });
+
+    // Clones do começo, no fim (primeiras k fotos, em ordem).
+    for (let j = 0; j < k; j++) {
+      track.appendChild(makeSlide(images[j], j, true));
+    }
   }
 
   /* ── Lógica do carrossel ────────────────────────────────── */
   function startCarousel(ctx) {
-    const { root, track, dotsBox, prevBtn, nextBtn, total } = ctx;
-    let current = 0;
+    const { root, track, dotsBox, prevBtn, nextBtn, total, initialIndex } = ctx;
+    // Quantos clones existem em cada ponta (mesma conta do buildSlides).
+    const k = total > 1 ? Math.min(CLONES, total) : 0;
+    // A foto real i (0..total-1) mora no DOM na posição i + k. As k
+    // posições antes de FIRST e as k depois de LAST são clones.
+    const FIRST = k;
+    const LAST  = k + total - 1;
+    let pos = FIRST + (initialIndex || 0);
     let timer = null;
 
     const dots = Array.from(dotsBox.children);
     const slides = Array.from(track.children);
     const viewport = track.parentElement;
 
-    function go(index) {
-      current = (index + total) % total;
-      const slideEl = slides[current];
+    function realIndex(p) {
+      return ((p - k) % total + total) % total;
+    }
+
+    function render(withTransition) {
+      // Sem transição, silenciamos tanto o deslize da trilha quanto o
+      // zoom/opacidade dos slides, para o "salto" da costura ser
+      // totalmente invisível (nada de pop no slide do centro).
+      if (!withTransition) track.classList.add('no-anim');
+      slides.forEach((s, i) => s.classList.toggle('carousel-slide--active', i === pos));
+      const slideEl = slides[pos];
       if (slideEl) {
         const offset = slideEl.offsetLeft - (viewport.clientWidth - slideEl.offsetWidth) / 2;
         track.style.transform = 'translateX(' + (-offset) + 'px)';
       }
-      dots.forEach((d, i) => d.classList.toggle('active', i === current));
+      if (!withTransition) {
+        track.offsetHeight; // force reflow com o novo estado já aplicado
+        track.classList.remove('no-anim');
+      }
+      const ri = realIndex(pos);
+      dots.forEach((d, i) => d.classList.toggle('active', i === ri));
     }
 
-    window.addEventListener('resize', () => go(current));
+    // Ao terminar a animação sobre um clone, salta sem transição para o
+    // slide real equivalente na outra ponta — o usuário só vê o loop
+    // contínuo, nunca a costura.
+    track.addEventListener('transitionend', (e) => {
+      if (e.target !== track || e.propertyName !== 'transform') return;
+      if (pos > LAST) { pos -= total; render(false); }
+      else if (pos < FIRST) { pos += total; render(false); }
+    });
 
-    // Posiciona o primeiro slide sem animação de entrada.
-    track.style.transition = 'none';
-    go(0);
-    track.offsetHeight; // force reflow
-    track.style.transition = '';
+    window.addEventListener('resize', () => render(false));
 
-    const next = () => go(current + 1);
-    const prev = () => go(current - 1);
+    // Posiciona o primeiro slide sem animação de entrada. Como o slide em
+    // destaque tem largura livre (definida pela proporção da própria
+    // imagem), a centralização só fica correta depois que essa imagem
+    // carrega — antes disso ela ainda não tem tamanho, e a conta de
+    // centralização dá um valor errado (foto de abertura "deslocada").
+    render(false);
+    const heroImg = slides[pos] && slides[pos].querySelector('img');
+    if (heroImg && !heroImg.complete) {
+      heroImg.addEventListener('load', () => render(false), { once: true });
+    }
+
+    function go(newPos) { pos = newPos; render(true); }
+
+    const next = () => go(pos + 1);
+    const prev = () => go(pos - 1);
 
     prevBtn && prevBtn.addEventListener('click', () => { prev(); restart(); });
     nextBtn && nextBtn.addEventListener('click', () => { next(); restart(); });
 
     dots.forEach(dot => {
       dot.addEventListener('click', () => {
-        go(Number(dot.dataset.index));
+        go(Number(dot.dataset.index) + FIRST);
         restart();
       });
     });
