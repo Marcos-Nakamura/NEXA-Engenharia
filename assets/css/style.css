@@ -185,11 +185,11 @@ body:not(.page-home) #site-header {
 }
 
 .site-logo img {
-  height: 98px;
+  height: var(--header-h);
   width: auto;
   display: block;
   border-radius: 12px;
-  padding: 3px;
+  padding: 0;
   background: rgba(255, 255, 255, 0);
   transition: background-color 0.35s ease;
 }
@@ -1164,7 +1164,7 @@ body:not(.page-home) .main-nav a.nav-cta:hover {
   .whatsapp-float { right: 1rem; bottom: 1rem; width: 64px; height: 64px; }
   .whatsapp-float svg { width: 40px; height: 40px; }
 
-  .site-logo img { height: 74px; }
+  .site-logo img { height: var(--header-h); }
 }
 
 @media (max-width: 480px) {
